@@ -429,7 +429,7 @@ contract NFPLToken is StandardToken, BurnableMintableToken, DetailedERC20, Gover
 
 
     function mint(address _to, uint256 _amount) external onlyManyOwners() returns (bool){
-        require(totalSupply.add(_amount) <= MaxSupply);
+        require(totalSupply_.add(_amount) <= MaxSupply);
         _mint(_to, _amount);
         return true;
     }
@@ -440,6 +440,5 @@ contract NFPLToken is StandardToken, BurnableMintableToken, DetailedERC20, Gover
         emit Burn(_to, _amount);
         return true;
     }
-
 
 }
