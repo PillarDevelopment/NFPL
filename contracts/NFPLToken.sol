@@ -128,7 +128,7 @@ contract Multiownable {
     }
 
     function _transferOwnership(address _newOwner, address _oldOwner) internal {
-        require(_newOwner != address(0));
+        require(_newOwner != address(0), "transferOwnership: incorrect newOwner");
 
         for(uint256 i = 0; i < owners.length; i++) {
             if (_oldOwner == owners[i]) {
@@ -141,29 +141,6 @@ contract Multiownable {
         emit OwnershipTransferred(_oldOwner, _newOwner);
     }
 
-}
-
-contract GovernanceMigratable is Multiownable {
-    mapping(address => bool) public governanceContracts;
-
-    event GovernanceContractAdded(address addr);
-    event GovernanceContractRemoved(address addr);
-
-    function addAddressToGovernanceContract(address addr) onlyManyOwners public returns(bool success) {
-        if (!governanceContracts[addr]) {
-            governanceContracts[addr] = true;
-            emit GovernanceContractAdded(addr);
-            success = true;
-        }
-    }
-
-    function removeAddressFromGovernanceContract(address addr) onlyManyOwners public returns(bool success) {
-        if (governanceContracts[addr]) {
-            governanceContracts[addr] = false;
-            emit GovernanceContractRemoved(addr);
-            success = true;
-        }
-    }
 }
 
 contract ERC20Basic {
@@ -225,8 +202,8 @@ contract BasicToken is ERC20Basic {
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_value <= balances[msg.sender]);
-        require(_to != address(0));
+        require(_value <= balances[msg.sender], "BasicToken: incorrect value");
+        require(_to != address(0),  "BasicToken: incorrect sender");
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -279,9 +256,9 @@ contract StandardToken is ERC20, BasicToken {
     public
     returns (bool)
     {
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-        require(_to != address(0));
+        require(_value <= balances[_from], "StandardToken: incorrect value");
+        require(_value <= allowed[_from][msg.sender], "StandardToken: incorrect allowed");
+        require(_to != address(0), "StandardToken: incorrect sender");
 
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -390,7 +367,7 @@ contract BurnableMintableToken is BasicToken {
     event Mint(address indexed to, uint256 amount);
 
     function _burn(address _who, uint256 _value) internal {
-        require(_value <= balances[_who]);
+        require(_value <= balances[_who], "BurnableMintableToken: incorrect value");
 
         balances[_who] = balances[_who].sub(_value);
         totalSupply_ = totalSupply_.sub(_value);
@@ -407,7 +384,7 @@ contract BurnableMintableToken is BasicToken {
 
 }
 
-contract NFPLToken is StandardToken, BurnableMintableToken, DetailedERC20, GovernanceMigratable  {
+contract NFPLToken is StandardToken, BurnableMintableToken, DetailedERC20, Multiownable  {
 
     uint8 constant DECIMALS = 18;
 
@@ -429,7 +406,7 @@ contract NFPLToken is StandardToken, BurnableMintableToken, DetailedERC20, Gover
 
 
     function mint(address _to, uint256 _amount) external onlyManyOwners() returns (bool){
-        require(totalSupply_.add(_amount) <= MaxSupply);
+        require(totalSupply_.add(_amount) <= MaxSupply, "NFPLToken: TotalSupply can't be more maxSupply");
         _mint(_to, _amount);
         return true;
     }
